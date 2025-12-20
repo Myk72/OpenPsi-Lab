@@ -14,6 +14,9 @@
 
 (= (get-random $x $y)
     (np-randint $x $y))
+    
+(= (thompson-sampler $a $b $n) (
+    np-beta $a $b $n))
 
 ;; Add Demands
 !(addDemand &demandSpace affiliation -10 10 5)
@@ -48,7 +51,7 @@
 
         ($applicableRules 
             (if (== $demandName curiosity)
-                (matchRules $state $ruleSpace)
+                (matchRules ($state) $ruleSpace)
                 (let* (
                     ($applicableGoalRules (matchGoal $goalName $ruleSpace))
                     ($_ (println! (Rules matching goal: $applicableGoalRules)))
