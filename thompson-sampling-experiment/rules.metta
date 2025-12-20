@@ -2,7 +2,7 @@
 (= (addRules $space) (
     let $atoms
         (superpose (
-            (: rule 1
+            (: Rule 1
                 (TTV 0)
                 (STV 0.5 0.002)  
                 (Complexity 1)
@@ -19,7 +19,7 @@
             ))
 
             ;; Rule 2: Stay at Left Square (Bad idea usually)
-            (: rule 2
+            (: Rule 2
                 (TTV 0)
                 (STV 0.5 0.002)  
                 (Complexity 1)
@@ -36,7 +36,7 @@
             ))
             
             ;; Rule 3: Move Left from Center -> Left
-            (: rule 3
+            (: Rule 3
                 (TTV 0)
                 (STV 0.5 0.002)
                 (Complexity 1)
@@ -53,7 +53,7 @@
             ))
 
             ;; Rule 4: Move Right from Center -> Right (Goal)
-            (: rule 4
+            (: Rule 4
                 (TTV 0)
                 (STV 0.5 0.002)
                 (Complexity 1)
@@ -71,7 +71,3 @@
         ))
     (add-atom $space $atoms)
 ))
-
-; !(bind! &test (new-space))
-; !(addRules &test)
-; !(get-atoms &test)

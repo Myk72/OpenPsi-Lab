@@ -1,14 +1,17 @@
 !(import! &self logic)
 !(import! &self rules)
+!(import! &self ts-algorithm)
 !(bind! &rule-space (new-space))
 
 !(addRules &rule-space)
-
+(= (thompson-sampler $a $b $n) (
+    np-beta $a $b $n))
+    
 ; !(get-atoms &rule-space)
 
-;; this is sample testing only
+; this is sample testing only
 (= (executeAction $action $space) (
-    let $rand (np-rand)
+    let $rand (random-float &rng 0 1)
     (if (== $action (SEQ_AND (MOVE_RIGHT)))
         ;; Moving Right is generally good, but sometimes dangerous
         (if (> $rand 0.3) 1 0)
@@ -51,6 +54,4 @@
         ) (run-agent-loop (- $iter 1) $nextContext))
 ))
 
-
 !(run-agent-loop 2 ((LEFT_SQUARE (STV 1.0 1.0)) (STILL_ALIVE (STV 1.0 1.0))))
-; !(get-atoms &rule-space)
