@@ -1,20 +1,20 @@
-from utils import MockEnvironment
+from utils import *
 
 def main():
-    env = MockEnvironment()
-    env.connect()
-    
-    obs = env.getObservation()
+    result = connectToMinecraft()
+    obs = getObservation()
     print(f"Observation: {obs}")
-
-    print("Executing action: moveForward")
-    env.executeAction("moveForward")
-    print(f"New position: {env._position}")
-
-    print("Executing action: eat")
-    env.executeAction("eat")
     
-    env.disconnect()
+    actionStat = executeAction("moveForward")
+    print(f"Action: {actionStat}")
+    
+    hunger = getHungerLevel()
+    print(f"Hunger: {hunger}")
+    
+    is_night = isNightTime()
+    print(f"Is Night: {is_night}")
+    
+    disconnectFromMinecraft()
 
 if __name__ == "__main__":
     main()
