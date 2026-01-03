@@ -8,8 +8,9 @@
 ;   (hasItem $item $count)  - Inventory item
 
 !(import! &self "utils.py")
-!(bind! &perceptionSpace (new-space))
-!(bind! totalPoints 20)
+; !(bind! &perceptionSpace (new-space))
+; !(bind! totalPoints 20)
+(= (totalPoints) 20)
 
 (= (removeOccurrences $space)
    (let $atoms (get-atoms $space)
@@ -17,15 +18,9 @@
     )
 )
 
-(= (update-perception $space)
+(= (updatePerception $space)
    (let* (
-      ($_ (removeOccurrences $space (at $x $y $z)))
-      ($_ (removeOccurrences $space (health $h)))
-      ($_ (removeOccurrences $space (hunger $hun)))
-      ($_ (removeOccurrences $space (isDay $d)))
-      ($_ (removeOccurrences $space (nearEntity $t $dist)))
-      ($_ (removeOccurrences $space (hasItem $i $c)))
-      
+      ($_ (collapse(removeOccurrences $space)))
       ($obs (py-call (getObservation))) ;; to be implemented later
       ($_ (add-atom $space $obs))
    )
@@ -75,12 +70,12 @@
 
 (= (hungerUrgency $space)
    (let $hunger (getHunger $space)
-      (/ (- totalPoints $hunger) totalPoints)))
+      (/ (- (totalPoints) $hunger) (totalPoints))))
 
 
 (= (healthUrgency $space)
    (let $health (getHealth $space)
-      (/ (- totalPoints $health) totalPoints)))
+      (/ (- (totalPoints) $health) (totalPoints))))
 
 (= (safetyLevel $space)
    (let* (
