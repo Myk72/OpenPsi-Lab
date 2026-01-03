@@ -1,18 +1,22 @@
 from utils import *
 
 def main():
-    result = connectToMinecraft()
+    status = connectToMinecraft()
+
     obs = getObservation()
-    print(f"Observation: {obs}")
+    print("Observation 1" , obs)
     
     actionStat = executeAction("moveForward")
-    print(f"Action: {actionStat}")
+    print("Action Status: " , actionStat)
     
+    obs2 = getObservation()
+    print("Observation 2" , obs2)
+
     hunger = getHungerLevel()
-    print(f"Hunger: {hunger}")
+    print("Hunger: " , hunger)
     
-    is_night = isNightTime()
-    print(f"Is Night: {is_night}")
+    isNight = isNightTime()
+    print("Is Night: " , isNight)
     
     disconnectFromMinecraft()
 

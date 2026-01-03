@@ -31,14 +31,15 @@
 
 
 (= (initModulators)
-   (let* (
-      ($_ (add-atom &modulatorSpace (modulator SelectionThreshold 0.5)))
-      ($_ (add-atom &modulatorSpace (modulator ActivationLevel 0.6)))
-      ($_ (add-atom &modulatorSpace (modulator ResolutionLevel 0.5)))
-      ($_ (add-atom &modulatorSpace (modulator SecuringThreshold 0.4)))
-      ($_ (add-atom &modulatorSpace (modulator GoalChangeUrgency 0.3)))
-   )
-   ()
+   (
+      let $modulators (superpose(
+         (modulator SelectionThreshold 0.5)
+         (modulator ActivationLevel 0.6)
+         (modulator ResolutionLevel 0.5)
+         (modulator SecuringThreshold 0.4)
+         (modulator GoalChangeUrgency 0.3)
+      ))
+      (collapse (add-atom &modulatorSpace $modulators))
    )
 )
 
