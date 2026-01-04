@@ -56,3 +56,18 @@
     ))
 )
 
+
+(= (query $space (modulator $x $y)) (collapse (match $space (modulator $x $y) (modulator $x $y))))
+(= (query $space (perception $x $y)) (collapse (match $space (perception $x $y) (perception $x $y))))
+(= (query $space (demand $name $min $max $val)) (collapse (match $space (demand $name $min $max $val) (demand $name $min $max $val))))
+
+; (: queryAll (-> Grounded Symbol Expression))
+(= (queryAll $space $type)
+   (case $type (
+          (modulator (query $space (modulator $x $y)))
+          (perception (query $space (perception $x $y)))
+          (demand (query $space (demand $name $min $max $val)))
+          ($_ (Error "This form doesn't exist in the atomspace"))
+        )
+     )
+)
