@@ -1,26 +1,27 @@
 
 ; !(bind! &ruleSpace (new-space))
-; !(bind! &demandspace (new-space))
+; !(bind! &demandSpace (new-space))
 
-!(add-atom &demandspace (demand hunger 0 10 8))
-!(add-atom &demandspace (demand safety 0 10 9))
-!(add-atom &demandspace (demand curiosity 0 10 3))
-!(add-atom &demandspace (demand energy 0 10 10))
+!(add-atom &demandSpace (demand hunger 0 10 8))
+!(add-atom &demandSpace (demand safety 0 10 9))
+!(add-atom &demandSpace (demand curiosity 0 10 3))
+!(add-atom &demandSpace (demand energy 0 10 10))
 
 
-(= (goalSelector $x) (
+(= (minecraftGoalSelector $x) (
   case $x (
     (hunger (Goal FindFood 1.0 0.9))
     (safety (Goal SeekShelter 1.0 0.9))
     (curiosity (Goal Explore 1.0 0.5))
+    (energy (Goal RestoreHealth 1.0 0.9))
   ))
 )
 
-(= (addRules $space) (
+(= (addMinecraftRules $space) (
   let $atoms (superpose(
     
     ;; Rule 1: Search Food
-    (: r1
+    (: Rule 1
         (TTV 0)
         (STV 0.9 0.8)
         (Complexity 5)
@@ -38,7 +39,7 @@
     )
 
     ;; Rule 2: Approach Food
-    (: r2
+    (: Rule 2
         (TTV 0)
         (STV 0.85 0.8)
         (Complexity 4)
@@ -56,7 +57,7 @@
     )
 
     ;; Rule 3: Eat Food
-    (: r3
+    (: Rule 3
         (TTV 0)
         (STV 0.95 0.9)
         (Complexity 6)
@@ -74,7 +75,7 @@
     )
 
     ;; Rule 4: Heal By Eating
-    (: r4
+    (: Rule 4
         (TTV 0)
         (STV 0.8 0.7)
         (Complexity 5)
@@ -92,7 +93,7 @@
     )
 
     ;; Rule 5: Seek Shelter Night
-    (: r5
+    (: Rule 5
         (TTV 0)
         (STV 0.9 0.85)
         (Complexity 6)
@@ -110,7 +111,7 @@
     )
 
     ;; Rule 6: Enter Shelter
-    (: r6
+    (: Rule 6
         (TTV 0)
         (STV 0.85 0.8)
         (Complexity 5)
@@ -128,7 +129,7 @@
     )
 
     ;; Rule 7: Flee Hostile
-    (: r7
+    (: Rule 7
         (TTV 0)
         (STV 0.95 0.9)
         (Complexity 7)
@@ -146,7 +147,7 @@
     )
 
     ;; Rule 8: Build Barrier
-    (: r8
+    (: Rule 8
         (TTV 0)
         (STV 0.7 0.6)
         (Complexity 4)
@@ -164,7 +165,7 @@
     )
 
     ;; Rule 9: Wander
-    (: r9
+    (: Rule 9
         (TTV 0)
         (STV 0.6 0.5)
         (Complexity 3)
@@ -182,7 +183,7 @@
     )
 
     ;; Rule 10: Look Around
-    (: r10
+    (: Rule 10
         (TTV 0)
         (STV 0.5 0.5)
         (Complexity 2)
@@ -200,7 +201,7 @@
     )
 
     ;; Rule 11: Investigate
-    (: r11
+    (: Rule 11
         (TTV 0)
         (STV 0.7 0.6)
         (Complexity 3)
@@ -218,7 +219,7 @@
     )
 
     ;; Rule 12: Gather Resources
-    (: r12
+    (: Rule 12
         (TTV 0)
         (STV 0.8 0.7)
         (Complexity 4)
@@ -236,7 +237,7 @@
     )
 
     ;; Rule 13: Collect Drops
-    (: r13
+    (: Rule 13
         (TTV 0)
         (STV 0.85 0.75)
         (Complexity 4)
@@ -258,8 +259,6 @@
 ))
 
 
-(= (performAction searchForFood)
-   (py-call (utils.executeAction moveForward)))
 
 (= (performAction $result) (
   case $result (

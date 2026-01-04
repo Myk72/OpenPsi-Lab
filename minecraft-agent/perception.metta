@@ -6,10 +6,9 @@
 ;   (isDay $bool)           - Time of day
 ;   (nearEntity $type $dist) - Nearby entity
 ;   (hasItem $item $count)  - Inventory item
+;   etc.
 
-!(import! &self "utils.py")
-; !(bind! &perceptionSpace (new-space))
-; !(bind! totalPoints 20)
+
 (= (totalPoints) 20)
 
 (= (removeOccurrences $space)
@@ -21,10 +20,12 @@
 (= (updatePerception $space)
    (let* (
       ($_ (collapse(removeOccurrences $space)))
-      ($obs (py-call (getObservation))) ;; to be implemented later
-      ($_ (add-atom $space $obs))
+      ; ($_ (println! (collapse (get-atoms $space))))
+      ($obs (py-call (utils.getObservation)))
+      ($_ (collapse (addIndividualObservation $obs $space)))
    )
-   ()))
+   (perception Updated)
+   ))
 
 
 (= (getPosition $space)
@@ -87,19 +88,26 @@
    (- (+ 0.5 $dayBonus) $hostilePenalty)))
 
 
-(= (perceptionUpdater $perceptionSpace $demandSpace)
+(= (perceptionToDemands $perceptionSpace $demandSpace)
    (let* (
-      ($hungerUrg (hungerUrgency $perceptionSpace))
+      ($hungerVal (hungerUrgency $perceptionSpace))
       ($healthUrg (healthUrgency $perceptionSpace))
       ($safetyLvl (safetyLevel $perceptionSpace))
+      ; ($_ (println! ("demands: " $safetyLvl $hungerVal $healthUrg)))
       
-      ($hungerSatisfaction (- 1 $hungerUrg))
-      ($safetySatisfaction $safetyLvl)
+      ($safetyVal (- 1.0 $safetyLvl))
       
-      ;; update demands
-      ;; to be implement later
+      
+      ((demand hunger $hMin $hMax $hOld) (getDemandByName $demandSpace hunger))
+      ($__ (updateDemandValue $demandSpace hunger $hungerVal))
+      
+      ((demand safety $sMin $sMax $sOld) (getDemandByName $demandSpace safety))
+      ($___ (updateDemandValue $demandSpace safety $safetyVal))
+
+      ((demand energy $eMin $eMax $eOld) (getDemandByName $demandSpace energy))
+      ($____ (updateDemandValue $demandSpace energy $healthUrg))
    )
-   ()
+   (Demands Updated)
    )
 )
 

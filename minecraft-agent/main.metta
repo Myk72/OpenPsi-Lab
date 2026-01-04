@@ -1,29 +1,27 @@
 !(import! &self "utils.py")
-
-; !(import! &self ../demand)
-; !(import! &self ../feedback-loop-ts)
-
-!(import! &self perception)
-!(import! &self rules)
+!(import! &self ../demand)
+!(import! &self ../thompson-sampling-experiment/logic)
+!(import! &self ../thompson-sampling-experiment/ts-algorithm)
+!(import! &self ../feedback-helper)
+;; !(import! &self ../feedback-loop-ts)
 
 !(bind! &kb (new-space))
 !(bind! &perceptionSpace (new-space))
 !(bind! &modulatorSpace (new-space))
-
 !(bind! &ruleSpace (new-space))
-!(bind! &demandspace (new-space))
+!(bind! &demandSpace (new-space))
+
+!(import! &self perception)
+!(import! &self rules)
 
 (= (kbInitializer $kb)
    (let* (
       ($rules (collapse (get-atoms &ruleSpace)))
-    ;   ($_ (println! (Rules: $rules)))
       ($modulators (collapse (get-atoms &modulatorSpace)))
-    ;   ($_ (println! (Modulators: $modulators)))
-      ($demands (collapse (get-atoms &demandspace)))
-    ;   ($_ (println! (Demands: $demands)))
+      ($demands (collapse (get-atoms &demandSpace)))
       ($partialKb (union-atom $rules $modulators))
       ($kbExp (union-atom $partialKb $demands))
-      ($_ (collapse (add-atom $kb $kbExp)))
+      ($_ (collapse (let $atom (superpose $kbExp) (add-atom $kb $atom))))
    )
    ()
    )
@@ -40,6 +38,103 @@
          (modulator GoalChangeUrgency 0.3)
       ))
       (collapse (add-atom &modulatorSpace $modulators))
+   )
+)
+
+(= (modulatorUpdaterAgent $space $comp $aff $ener)
+   (let* (
+      ;; just temporary placeholders for modulator update logic
+      ($_ (println! "Modulators Updated"))
+   )
+   (Modulators Updated)
+   )
+)
+
+(= (thompson-sampler $a $b $n) (
+    np-beta $a $b $n))
+
+(= (planner $space $init $goalName)
+    (let* (
+          ($rules (collapse (match $space 
+              (: Rule $id $ttv $stv $comp 
+                  (IMPLICATION 
+                      (AND (Context $cstv (AND ((Goal $goalName $gStv)))) $action) 
+                      $consequent
+                  )
+              )
+              $id
+          )))
+          ($_ (println! (Applicable Rules for goal $goalName : $rules )))
+          ($result (if (== $rules ())
+             ()
+             (let* (
+                (($chosenId $score) (sampler $rules $space))
+                ($actionAtom (getAction $chosenId $space))
+                ;; Extract action name from (SEQ_AND (actionName))
+                ((SEQ_AND ($actName)) $actionAtom)
+             )
+             ($actName)
+             )
+          ))
+    )
+    $result
+    )
+)
+
+(= (cognitiveStep)
+   (let* (
+      ($_ (updatePerception &perceptionSpace))
+      ($_ (perceptionToDemands &perceptionSpace &demandSpace))
+      
+      ($demands (queryAll &kb demand))
+      ; ($_ (println! (Demands: $demands)))
+      
+      ($currDemand (fetchLeastSatisfiedDemand &demandSpace))
+      ($_ (println! (Selected-Demand: $currDemand)))
+      
+      ((demand $demandName $minVal $maxVal $demandValue) $currDemand)
+      
+      ($goalObj (minecraftGoalSelector $demandName))
+      ((Goal $goal $goalVal1 $goalVal2) $goalObj)
+      ($_ (println! (Selected-Goal: $goal)))
+      
+      ;; 5. PLAN: Find actions to achieve the goal
+      ($actions (planner &ruleSpace init $goal))
+      ($_ (println! (Planned Actions: $actions)))
+      
+      ($result (if (== $actions ())
+         ()
+         (let $action (car-atom $actions)
+            (performAction $action))))
+      ($_ (println! (Action Result: $result)))
+      
+      ;; To be implemented later - Update modulators based on demands and action results
+      ;; ($_ (modulatorUpdaterAgent &modulatorSpace $))
+   )
+   (Step-Complete)
+   )
+)
+
+
+(= (cognitiveLoop $maxSteps $currentStep)
+   (if (> $currentStep $maxSteps)
+      ()
+      (let* (
+         ($_ (println! (Step $currentStep / $maxSteps)))
+         ($_ (cognitiveStep))
+      )
+      (cognitiveLoop $maxSteps (+ $currentStep 1))
+      )
+   )
+)
+
+
+(= (runInteractive)
+   (let* (
+      ($_ (println! "Minecraft OpenPsi Agent"))
+      ($_ (println! "Running in interactive mode..."))
+   )
+   (cognitiveLoop 2 1)
    )
 )
 
@@ -89,9 +184,11 @@
 ; !(get-atoms &perceptionSpace)
 
 !(initModulators)
-!(collapse(addRules &ruleSpace))
-!(kbInitializer &kb)
+!(collapse(addMinecraftRules &ruleSpace))
+!(collapse(kbInitializer &kb))
 ; !(get-atoms &kb)
+
+!(runInteractive)
 
 ; !(testPerception)
 ; !(testGoalSelection)
