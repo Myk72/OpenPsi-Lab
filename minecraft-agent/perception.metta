@@ -1,13 +1,4 @@
 ;; Minecraft Agent Perception Module
-;; Perception atoms follow these patterns:
-;   (at $x $y $z)           - Agent position
-;   (health $value)         - Health points (0-20)
-;   (hunger $value)         - Hunger points (0-20)
-;   (isDay $bool)           - Time of day
-;   (nearEntity $type $dist) - Nearby entity
-;   (hasItem $item $count)  - Inventory item
-;   etc.
-
 
 (= (totalPoints) 20)
 
@@ -26,6 +17,19 @@
    )
    (perception Updated)
    ))
+
+(= (addIndividualObservation $atoms $space)
+   (if (== $atoms ())
+      (empty)
+      (let* (
+         (($head $tail) (decons $atoms))
+         ($expr (sread $head))
+         ($_ (collapse (add-atom $space $expr)))
+         ($_ (collapse (addIndividualObservation $tail $space)))
+      )
+      ()
+      )
+))
 
 
 (= (getPosition $space)

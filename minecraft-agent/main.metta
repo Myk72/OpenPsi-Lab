@@ -98,7 +98,7 @@
       ((Goal $goal $goalVal1 $goalVal2) $goalObj)
       ($_ (println! (Selected-Goal: $goal)))
       
-      ;; 5. PLAN: Find actions to achieve the goal
+      
       ($actions (planner &ruleSpace init $goal))
       ($_ (println! (Planned Actions: $actions)))
       
@@ -132,9 +132,9 @@
 (= (runInteractive)
    (let* (
       ($_ (println! "Minecraft OpenPsi Agent"))
-      ($_ (println! "Running in interactive mode..."))
+      ($_ (println! "Running in interactive mode"))
    )
-   (cognitiveLoop 2 1)
+   (cognitiveLoop 1 1)
    )
 )
 
@@ -142,7 +142,7 @@
 (= (testPerception)
    (let* (
       ($_ (println! "Testing perception ..."))
-      ; ($_ (update-perception &perception-space))
+      ($_ (updatePerception &perception-space))
       ($hunger (hungerUrgency &perceptionSpace))
       ($safety (safetyLevel &perceptionSpace))
    )
@@ -166,27 +166,15 @@
    (addIndividualObservation $atoms $space)
 ))
 
-(= (addIndividualObservation $atoms $space)
-   (if (== $atoms ())
-      (empty)
-      (let* (
-         (($head $tail) (decons $atoms))
-         ($expr (sread $head))
-         ($_ (collapse (add-atom $space $expr)))
-         ($_ (collapse (addIndividualObservation $tail $space)))
-      )
-      ()
-      )
-))
 
-!(py-call (utils.connectToMinecraft))
+!(py-call (utils.connectToMinecraft vereya))
 !(addObservation &perceptionSpace)
-; !(get-atoms &perceptionSpace)
+; !(collapse(get-atoms &perceptionSpace))
 
 !(initModulators)
 !(collapse(addMinecraftRules &ruleSpace))
 !(collapse(kbInitializer &kb))
-; !(get-atoms &kb)
+; !(collapse(get-atoms &kb))
 
 !(runInteractive)
 
