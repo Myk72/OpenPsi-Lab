@@ -1,24 +1,26 @@
 from utils import *
 
 def main():
-    status = connectToMinecraft()
-
+    status = connectToMinecraft(mode="vereya")
+    print(f"Connection Status: {status}")
+    
     obs = getObservation()
-    print("Observation 1" , obs)
+    print(f"Observation Data: {obs}")
     
-    actionStat = executeAction("moveForward")
-    print("Action Status: " , actionStat)
+    atoms = observationToMetta(obs)
+    print(f"MeTTa Atoms: {atoms}")
     
-    obs2 = getObservation()
-    print("Observation 2" , obs2)
-
-    hunger = getHungerLevel()
-    print("Hunger: " , hunger)
+    action1 = executeAction('moveForward')
+    print(f"Action Result 1: {action1}")
     
-    isNight = isNightTime()
-    print("Is Night: " , isNight)
+    action2 = executeAction('turnLeft')
+    print(f"Action Result 2: {action2}")
     
-    disconnectFromMinecraft()
+    print(f"Hunger Level: {getHungerLevel()}")
+    print(f"Is Day?: {isDay()}")
+    
+    
+    print(f"{disconnectFromMinecraft()}")
 
 if __name__ == "__main__":
     main()
