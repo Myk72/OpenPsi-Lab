@@ -1,5 +1,10 @@
 ;; Minecraft Agent Perception Module
 
+!(add-atom &demandSpace (demand hunger 0.0 1.0 0.5))
+!(add-atom &demandSpace (demand safety 0.0 1.0 0.5))
+!(add-atom &demandSpace (demand curiosity 0.0 1.0 0.5))
+!(add-atom &demandSpace (demand energy 0.0 1.0 0.5))
+
 (= (totalPoints) 20)
 
 (= (removeOccurrences $space)
@@ -115,3 +120,78 @@
    )
 )
 
+
+(= (isEdible $item)
+   (case $item (
+      (porkchop True)
+      (cooked_porkchop True)
+      (beef True)
+      (cooked_beef True)
+      (chicken True)
+      (cooked_chicken True)
+      (mutton True)
+      (cooked_mutton True)
+      (rabbit True)
+      (cooked_rabbit True)
+      (bread True)
+      (apple True)
+      (carrot True)
+      (potato True)
+      (baked_potato True)
+      (golden_apple True)
+      (melon_slice True)
+      (sweet_berries True)
+      (cookie True)
+      ($_ False)
+   )))
+
+
+(= (hasEdibleFood $space)
+   (let $foodItems (collapse 
+      (match $space (hasItem $item $count)
+         (if (isEdible $item) 
+            ($item $count) 
+            Empty)))
+      (if (== $foodItems ()) 
+         False 
+         True)))
+
+
+(= (getInventoryFood $space)
+   (collapse 
+      (match $space (hasItem $item $count)
+         (if (isEdible $item) 
+            (FoodItem $item $count) 
+            Empty))))
+
+
+(= (isFoodAnimal $type)
+   (case $type (
+      (pig True)
+      (cow True)
+      (sheep True)
+      (chicken True)
+      (rabbit True)
+      ($_ False)
+   )))
+
+
+(= (hasFoodAnimalNearby $space)
+   (let $animals (collapse 
+      (match $space (nearEntity $type $dist)
+         (if (isFoodAnimal $type)
+            ($type $dist)
+            Empty)))
+      (if (== $animals ())
+         False
+         True)))
+
+(= (getNearestFoodAnimal $space)
+   (let $animals (collapse 
+      (match $space (nearEntity $type $dist)
+         (if (isFoodAnimal $type)
+            ($type $dist)
+            Empty)))
+      (if (== $animals ())
+         ()
+         (car-atom $animals))))
