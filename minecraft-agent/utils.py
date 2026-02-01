@@ -42,14 +42,34 @@ def getObservation() -> list:
     return observationToMetta(Observation((0,0,0), 0, 0, 20.0, 20.0, True, 6000, [], [], []))
 
 def executeAction(actionName: str, *args) -> str:
+    print(f"Executing Action: {actionName} with args {args}")
+    # print("is connected", not currentEnv)
     try:
         if not currentEnv:
             return "Not Connected"
         
         key = re.sub(r'(?<!^)(?=[A-Z])', '_', actionName).upper()
+        actionMap = {
+            "use": ActionType.USE,
+            "crouch": ActionType.CROUCH,
+            "drop": ActionType.DROP,
+            "jump": ActionType.JUMP,
+            "place": ActionType.PLACE,
+            "dig": ActionType.DIG,
+            "move_to": ActionType.MOVE_TO
+        }
+        
+        # print("Mapped action key:", key)
+        if actionName in actionMap and actionMap[actionName] == ActionType.MOVE_TO:
+            # print("len of args:", len(args))
+            if len(args) >= 3 and currentMode == "vereya" and hasattr(currentEnv, 'moveTo'):
+                return currentEnv.moveTo(float(args[0]), float(args[1]), float(args[2]))
+            return "MoveTo failed: insufficient args or mode"
+            
         
         if hasattr(ActionType, key):
             act = getattr(ActionType, key)
+            # print("Debugging line", act)
             return currentEnv.executeAction(act)
         else:
             if actionName == "chat":
@@ -59,19 +79,13 @@ def executeAction(actionName: str, *args) -> str:
                     return f"Chatted: {msg}"
                 return "Chat Failed: Not connected"
             
-            actionMap = {
-                "use": ActionType.USE,
-                "crouch": ActionType.CROUCH,
-                "drop": ActionType.DROP,
-                "jump": ActionType.JUMP,
-                "place": ActionType.PLACE,
-                "dig": ActionType.DIG
-            }
-            
-            if actionName in actionMap:
-                 return currentEnv.executeAction(actionMap[actionName])
-            
-            return f"Unknown Action {actionName}"
+        if actionName in actionMap:
+            target_action = actionMap[actionName]
+            return currentEnv.executeAction(target_action)
+        
+        return f"Unknown Action {actionName}"
+
+
             
     except Exception as e:
         return f"Error executing {actionName}: {e}"
@@ -92,7 +106,9 @@ def observationToMetta(obs: Observation):
             if isinstance(entity, dict):
                 eType = entity.get('type', 'unknown')
                 dist = entity.get('distance', 0)
-                atoms.append(f"(nearEntity {eType} {dist})")
+                pos = entity.get('position', [0,0,0])
+                atoms.append(f"(nearEntity {eType} {dist} {pos[0]} {pos[1]} {pos[2]})")
+
 
     if obs.nearbyBlocks:
          for block in obs.nearbyBlocks:
@@ -116,3 +132,16 @@ def getHealth() -> str:
 
 def isDay() -> str:
     return "True" if getObservation().isDay else "False"
+
+def sortEntities(*args) -> list:
+    if not args:
+        return []
+    data = list(args[0]) if len(args) == 1 and isinstance(args[0], (list, tuple)) else list(args)
+    
+    try:
+        return sorted(data, key=lambda e: float(e[-1]) if isinstance(e, (list, tuple)) and len(e) > 0 else 0)
+    except Exception as e:
+        print(f"Error sorting entities in Python: {e}")
+        return data
+
+

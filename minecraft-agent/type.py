@@ -16,6 +16,8 @@ class ActionType(Enum):
     USE = auto()
     CROUCH = auto()
     DROP = auto()
+    MOVE_TO = auto()
+
 
 @dataclass
 class Observation:

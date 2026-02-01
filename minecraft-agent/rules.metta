@@ -260,25 +260,46 @@
 (= (performAction $result) (
   case $result (
     ;; hardcoded actions for testing
-    (searchForFood (py-call (utils.executeAction moveForward)))
-    (moveToFood (py-call (utils.executeAction moveForward)))
+    (searchForFood (let* (
+        ((at $x $y $z) (getPosition &perceptionSpace))
+        ($tx (+ $x (random-int &rng 3 10)))
+        ($tz (+ $z (random-int &rng 3 10)))
+
+        ($res (py-call (utils.executeAction move_to $tx $y $tz)))
+    )
+    $res))
+    (moveToFood (let* (
+        ($pos (getNearestFoodAnimalPos &perceptionSpace))
+        ($_ (println! ("Moving to food at position:" $pos)))
+        (($x $y $z) $pos)
+        ($res (py-call (utils.executeAction move_to $x $y $z)))
+    )
+    $res))
     (eat (py-call (utils.executeAction eat)))
-    (findShelter (py-call (utils.executeAction moveForward)))
+    (findShelter (py-call (utils.executeAction move_to 0 64 0)))
     (enterShelter (py-call (utils.executeAction moveForward)))
     (placeBlocks (py-call (utils.executeAction place)))
     (lookAround (py-call (utils.executeAction turnLeft)))
-    (approachTarget (py-call (utils.executeAction moveForward)))
+    (approachTarget (let* (
+        ($ents (getNearbyEntities &perceptionSpace sheep))
+        (($type $dist $x $y $z) (car-atom $ents)))
+
+        (py-call (utils.executeAction move_to $x $y $z))
+    ))
     (dig (py-call (utils.executeAction dig)))
-    (collectItem (py-call (utils.executeAction moveForward)))
+    (collectItem (py-call (utils.executeAction move_to 0 0 0)))
   ))
 )
 
 
 (= (performAction wander)
    (let* (
-      ($x (py-call (utils.executeAction turnLeft)))
-      ; ($__ (println! $x))
-      ($_ (py-call (utils.executeAction moveForward)))
+      ((at $x $y $z) (getPosition &perceptionSpace))
+
+    ($tx (+ $x (random-int &rng 3 5)))
+    ($tz (+ $z (random-int &rng 3 5)))
+
+    ($res (py-call (utils.executeAction move_to $tx $y $tz)))
    )
    (Wandered)))
 

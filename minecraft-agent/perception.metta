@@ -50,15 +50,16 @@
    (match $space (isDay $d) $d))
    
 (= (getNearbyEntities $space $type)
-   (collapse (match $space (nearEntity $type $dist) (nearEntity $type $dist))))
+   (collapse (match $space (nearEntity $type $dist $x $y $z) (nearEntity $type $dist $x $y $z))))
+
    
 (= (hostileNearby $space)
-   (let $hostiles (collapse (match $space (nearEntity $type $dist)
-      (if (or (== $type zombie) 
-              (or (== $type skeleton) 
-                  (or (== $type spider) (== $type creeper))))
-          True
-          False)))
+   (let $hostiles (collapse (match $space (nearEntity $type $dist $x $y $z)
+       (if (or (== $type zombie) 
+               (or (== $type skeleton) 
+                   (or (== $type spider) (== $type creeper))))
+           True
+           False)))
       (if (== $hostiles ()) 
          False 
          True  
@@ -178,7 +179,7 @@
 
 (= (hasFoodAnimalNearby $space)
    (let $animals (collapse 
-      (match $space (nearEntity $type $dist)
+      (match $space (nearEntity $type $dist $x $y $z)
          (if (isFoodAnimal $type)
             ($type $dist)
             Empty)))
@@ -188,10 +189,28 @@
 
 (= (getNearestFoodAnimal $space)
    (let $animals (collapse 
-      (match $space (nearEntity $type $dist)
+      (match $space (nearEntity $type $dist $x $y $z)
          (if (isFoodAnimal $type)
             ($type $dist)
             Empty)))
+
       (if (== $animals ())
          ()
          (car-atom $animals))))
+
+(= (getNearestFoodAnimalPos $space)
+   (let $animals (collapse 
+      (match $space (nearEntity $type $dist $x $y $z)
+         (if (isFoodAnimal $type)
+            ($x $y $z $dist)
+            (empty))))
+      (if (== $animals ())
+         ()
+         (let* (
+            ($sorted (py-call (utils.sortEntities $animals)))
+            (($x $y $z $d) (car-atom $sorted))
+         )
+         ($x $y $z)
+         )
+      )
+))
