@@ -2,10 +2,7 @@
 ; !(bind! &ruleSpace (new-space))
 ; !(bind! &demandSpace (new-space))
 
-!(add-atom &demandSpace (demand hunger 0 10 8))
-!(add-atom &demandSpace (demand safety 0 10 9))
-!(add-atom &demandSpace (demand curiosity 0 10 3))
-!(add-atom &demandSpace (demand energy 0 10 10))
+
 
 
 (= (minecraftGoalSelector $x) (
