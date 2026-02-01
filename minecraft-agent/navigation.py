@@ -1,6 +1,5 @@
 from heapq import heappop, heappush
 import math
-from typing import List, Tuple, Dict, Optional, Set
 
 class Navigation:
     walkableBlocks = {
@@ -9,11 +8,15 @@ class Navigation:
         "oak_sapling", "wheat", "sugar_cane", "lever", "redstone_torch",
         "redstone_wire", "tripwire", "tripwire_hook", "rail"
     }
-    
+    dangerBlocks = {"lava", "fire", "magma_block", "cactus", "sweet_berry_bush"}
     @staticmethod
     def is_passable(blockType):
         return blockType in Navigation.walkableBlocks or "flower" in blockType or "fern" in blockType
 
+    @staticmethod
+    def is_safe(blockType):
+        return blockType not in Navigation.dangerBlocks
+    
     @staticmethod
     def getNeighbors(pos, gridMap):
         x, y, z = pos
@@ -24,17 +27,26 @@ class Navigation:
             for dy in [0, 1, -1]:
                 ny = y + dy
                 target = (nx, ny, nz)
-                feet_above = (nx, ny + 1, nz)
+                target_head = (nx, ny + 1, nz)
+                block_below_target = (nx, ny - 1, nz)
                 
-                if target in gridMap and feet_above in gridMap:
-                    if Navigation.is_passable(gridMap[target]) and Navigation.is_passable(gridMap[feet_above]):
-                        below = (nx, ny - 1, nz)
-                        if below in gridMap and not Navigation.is_passable(gridMap[below]):
-                            if dy == 1:
-                                if (x, y + 2, z) not in gridMap or Navigation.is_passable(gridMap[(x, y + 2, z)]):
-                                    neighbors.append(target)
-                            else:
-                                neighbors.append(target)
+                if target not in gridMap or target_head not in gridMap or block_below_target not in gridMap or Navigation.is_passable(gridMap[block_below_target]):
+                    continue
+
+                if not (Navigation.is_passable(gridMap[target]) and Navigation.is_passable(gridMap[target_head])):
+                    continue
+                
+                if not Navigation.is_safe(gridMap[target]):
+                    continue
+
+
+                if dy == 1: 
+                    nextHeadPosition = (x, y + 2, z)
+                    if nextHeadPosition in gridMap and not Navigation.is_passable(gridMap[nextHeadPosition]):
+                        continue
+                
+                neighbors.append(target)
+                
         return neighbors
 
     @staticmethod
@@ -43,16 +55,24 @@ class Navigation:
             return None
         
         def heuristic(a, b):
-            return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2])
+            return math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2)
 
         heap = []
         heappush(heap, (0, start))
+        
         visited = {}
         g_score = {start: 0}
-        f_score = {start: heuristic(start, goal)}
-
         uniformCost = 1
+        
+        iterations = 0
+        MAX_ITER = 5000
         while heap:
+            iterations += 1
+            
+            if iterations > MAX_ITER:
+                print("Pathfinding timed out.")
+                return None
+
             _, current = heappop(heap)
 
             if current == goal:
@@ -60,27 +80,30 @@ class Navigation:
                 while current in visited:
                     path.append(current)
                     current = visited[current]
-                    
+
                 return path[::-1]
 
             for neighbor in Navigation.getNeighbors(current, grid_map):
-                current_g_score = g_score[current] + uniformCost
-                if neighbor not in g_score or current_g_score < g_score[neighbor]:
+                current_g_cost = g_score[current] + uniformCost
+                
+                if neighbor not in g_score or current_g_cost < g_score[neighbor]:
                     visited[neighbor] = current
-                    g_score[neighbor] = current_g_score
-                    f_score[neighbor] = current_g_score + heuristic(neighbor, goal)
-                    heappush(heap, (f_score[neighbor], neighbor))
+                    g_score[neighbor] = current_g_cost
+                    f_score = current_g_cost + heuristic(neighbor, goal)
+                    heappush(heap, (f_score, neighbor))
         
         return None
 
     @staticmethod
     def parseGrid(grid_list, grid_box):
         grid_map = {}
-        sz_x = grid_box[0][1] - grid_box[0][0] + 1
-        sz_y = grid_box[1][1] - grid_box[1][0] + 1
-        sz_z = grid_box[2][1] - grid_box[2][0] + 1
+        x_min, x_max = grid_box[0]
+        y_min, y_max = grid_box[1]
+        z_min, z_max = grid_box[2]
         
-        min_x, min_y, min_z = grid_box[0][0], grid_box[1][0], grid_box[2][0]
+        sz_x = x_max - x_min + 1
+        sz_y = y_max - y_min + 1
+        sz_z = z_max - z_min + 1
         
         idx = 0
         N = len(grid_list)
@@ -88,7 +111,8 @@ class Navigation:
             for z_off in range(sz_z):
                 for x_off in range(sz_x):
                     if idx < N:
-                        pos = (min_x + x_off, min_y + y_off, min_z + z_off)
-                        grid_map[pos] = grid_list[idx].replace("minecraft:", "")
+                        pos = (x_min + x_off, y_min + y_off, z_min + z_off)
+                        block_name = grid_list[idx].replace("minecraft:", "")
+                        grid_map[pos] = block_name
                         idx += 1
         return grid_map
