@@ -37,6 +37,7 @@ def disconnectFromMinecraft() -> str:
 def getObservation() -> list:
     if currentEnv:
         obs = currentEnv.getObservation()
+        # return obs
         return observationToMetta(obs)
     return observationToMetta(Observation((0,0,0), 0, 0, 20.0, 20.0, True, 6000, [], [], []))
 
@@ -51,15 +52,24 @@ def executeAction(actionName: str, *args) -> str:
             act = getattr(ActionType, key)
             return currentEnv.executeAction(act)
         else:
-            if actionName == "place": 
-                return currentEnv.executeAction(ActionType.PLACE)
-            if actionName == "dig": 
-                return currentEnv.executeAction(ActionType.DIG)
             if actionName == "chat":
-                if args:
-                    print(f"Agent says: {args[0]}")
-                    return "Chatted"
-                return "Chat Failed: No message"
+                msg = args[0] if args else "Hello"
+                if currentEnv and hasattr(currentEnv, 'rob') and currentEnv.rob:
+                    currentEnv.rob.sendCommand(f"chat {msg}")
+                    return f"Chatted: {msg}"
+                return "Chat Failed: Not connected"
+            
+            actionMap = {
+                "use": ActionType.USE,
+                "crouch": ActionType.CROUCH,
+                "drop": ActionType.DROP,
+                "jump": ActionType.JUMP,
+                "place": ActionType.PLACE,
+                "dig": ActionType.DIG
+            }
+            
+            if actionName in actionMap:
+                 return currentEnv.executeAction(actionMap[actionName])
             
             return f"Unknown Action {actionName}"
             

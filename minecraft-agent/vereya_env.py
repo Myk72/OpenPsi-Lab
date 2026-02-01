@@ -37,14 +37,14 @@ class VereyaEnvironment:
             self.mc = MCConnector(self.mission, clientIp='172.19.176.1') 
             self.rob = RobustObserver(self.mc)
             self.mc.safeStart()
-            
+                
             print("Mission accepted. Waiting for spawn...")
             time.sleep(2)
             self.connected = True
             return True
         except Exception as e:
             print(f"Failed to connect to Vereya: {e}")
-            return False
+        return False
             
     def disconnect(self):
         self.connected = False
@@ -108,6 +108,8 @@ class VereyaEnvironment:
                     
         blocks = [] 
         
+        line_of_sight = self.rob.getCachedObserve("getLineOfSights")
+
         return Observation(
             position=p,
             yaw=y,
@@ -118,7 +120,8 @@ class VereyaEnvironment:
             timeOfDay=worldTime, 
             inventory=inv,
             nearbyEntities=parsedEnts,
-            nearbyBlocks=blocks
+            nearbyBlocks=blocks,
+            lineOfSight=line_of_sight
         )
 
     def executeAction(self, actionType: ActionType) -> str:
@@ -160,5 +163,31 @@ class VereyaEnvironment:
             time.sleep(0.2)
             self.rob.sendCommand('use 0')
             return "Placed"
+
+        elif actionType == ActionType.USE:
+            self.rob.sendCommand('use 1')
+            time.sleep(10)
+            self.rob.sendCommand('use 0')
+            return "Used"
+            
+        elif actionType == ActionType.DIG:
+            self.rob.sendCommand('attack 1')
+            time.sleep(0.1)
+            self.rob.sendCommand('attack 0')
+            return "Dug"
+
+        elif actionType == ActionType.CHAT:
+            self.rob.sendCommand('chat Hello')
+            return "Chatted Hello"
+            
+        elif actionType == ActionType.CROUCH:
+            self.rob.sendCommand('crouch 1')
+            time.sleep(10)
+            self.rob.sendCommand('crouch 0')
+            return "Crouched"
+             
+        elif actionType == ActionType.DROP:
+            self.rob.sendCommand('discardCurrentItem')
+            return "Dropped Item"
             
         return "Action Sent"

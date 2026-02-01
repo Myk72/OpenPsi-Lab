@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 class ActionType(Enum):
     MOVE_FORWARD = auto()
@@ -12,6 +12,10 @@ class ActionType(Enum):
     EAT = auto()
     PLACE = auto()
     DIG = auto()
+    CHAT = auto()
+    USE = auto()
+    CROUCH = auto()
+    DROP = auto()
 
 @dataclass
 class Observation:
@@ -25,3 +29,5 @@ class Observation:
     inventory: List[Dict[str, Any]]
     nearbyEntities: List[Dict[str, Any]]
     nearbyBlocks: List[Dict[str, Any]]
+    
+    lineOfSight: Optional[Dict[str, Any]] = None
