@@ -1,10 +1,14 @@
 import time
 import sys
+from pathlib import Path
 
+PYTHON_ROOT = Path(__file__).resolve().parents[1]
+if str(PYTHON_ROOT) not in sys.path:
+    sys.path.insert(0, str(PYTHON_ROOT))
+
+from bridge.network_utils import resolveClientIp
 
 try:
-    # import tagilmo
-    # print(dir(tagilmo))
     import tagilmo.utils.mission_builder as mb
     from tagilmo.utils.vereya_wrapper import MCConnector, RobustObserver
 
@@ -14,7 +18,6 @@ except ImportError:
     sys.exit(1)
 
 def main():
-    print("Configuring Mission XML")
     obs = mb.Observations()
     agentHandlers = mb.AgentHandlers(observations=obs)
     
@@ -32,8 +35,9 @@ def main():
 
 
     print("Connecting to Minecraft")
-    
-    mc = MCConnector(miss, clientIp="172.19.176.1") # ip-address should be of the host machine running Minecraft, adjust based on that
+
+    client_ip = resolveClientIp()
+    mc = MCConnector(miss, clientIp=client_ip) 
     rob = RobustObserver(mc)
 
 
@@ -41,18 +45,17 @@ def main():
         mc.safeStart()
     except Exception as e:
         print(f"Failed to start mission: {e}")
-        print("Ensure Minecraft is running with the Vereya mod loaded.")
         return
 
     print("Mission accepted. Waiting for spawn ...")
     time.sleep(2)
 
     try:
-        print("\nTesting Controls")
+        print("\nTesting")
         
         print("Moving Forward")
         rob.sendCommand('move 1')
-        time.sleep(10)
+        time.sleep(5)
         rob.sendCommand('move 0')
         
         print("Turning")
@@ -60,13 +63,10 @@ def main():
         time.sleep(1)
         rob.sendCommand('turn 0')
         
-        print("Jumping...")
+        print("Jumping")
         rob.sendCommand('jump 1')
         time.sleep(1)
         rob.sendCommand('jump 0')
-
-        print("\nReading Observations")
-        print("Latest data:", rob.mc.observe.get(rob.agentId))
 
     except KeyboardInterrupt:
         print("Stopping ...")
