@@ -1,9 +1,10 @@
 ;; Minecraft Agent Perception Module
 
-!(add-atom &demandSpace (demand hunger 0.0 1.0 0.5))
-!(add-atom &demandSpace (demand safety 0.0 1.0 0.5))
-!(add-atom &demandSpace (demand curiosity 0.0 1.0 0.5))
-!(add-atom &demandSpace (demand energy 0.0 1.0 0.5))
+!(add-atom &demandSpace (demand hunger 0.0 1.0 1.0))
+!(add-atom &demandSpace (demand safety 0.0 1.0 0.7))
+!(add-atom &demandSpace (demand curiosity 0.0 1.0 0.75))
+!(add-atom &demandSpace (demand energy 0.0 1.0 1.0))
+!(add-atom &demandSpace (demand breath 0.0 1.0 1.0))
 
 (= (totalPoints) 20)
 
@@ -16,18 +17,18 @@
 (= (updatePerception $space)
    (let* (
       ($_ (collapse(removeOccurrences $space)))
-      ; ($_ (println! (collapse (get-atoms $space))))
       ($obs (py-call (utils.getObservation)))
       ($_ (collapse (addIndividualObservation $obs $space)))
    )
-   (perception Updated)
-   ))
+   ()
+))
 
 (= (addIndividualObservation $atoms $space)
    (if (== $atoms ())
       (empty)
       (let* (
          (($head $tail) (decons $atoms))
+         ; ($_ (println! ("Adding observation: " $head)))
          ($expr (sread $head))
          ($_ (collapse (add-atom $space $expr)))
          ($_ (collapse (addIndividualObservation $tail $space)))
@@ -45,6 +46,15 @@
    
 (= (getHunger $space)
    (match $space (hunger $h) $h))
+
+(= (getAir $space)
+   (match $space (air $a) $a))
+
+(= (getOnGround $space)
+   (match $space (onGround $g) $g))
+
+(= (getActionStatus $space)
+   (collapse (match $space (actionStatus $cmd $val) (actionStatus $cmd $val))))
    
 (= (isDaytime $space)
    (match $space (isDay $d) $d))
@@ -53,14 +63,14 @@
    (collapse (match $space (nearEntity $type $dist $x $y $z) (nearEntity $type $dist $x $y $z))))
 
    
-(= (hostileNearby $space)
+(= (hostileNearBy $space)
    (let $hostiles (collapse (match $space (nearEntity $type $dist $x $y $z)
        (if (or (== $type zombie) 
                (or (== $type skeleton) 
                    (or (== $type spider) (== $type creeper))))
            True
-           False)))
-      (if (== $hostiles ()) 
+           (empty))))
+      (if (== $hostiles ())
          False 
          True  
       )
@@ -91,33 +101,60 @@
 (= (safetyLevel $space)
    (let* (
       ($isDay (isDaytime $space))
-      ($hostileNear (hostileNearby $space))
-      ($dayBonus (if $isDay 0.5 0.0)) ;; safer during day
-      ($hostilePenalty (if $hostileNear 0.5 0.0))
+      ($isNight (not $isDay))
+      ($hostileNear (hostileNearBy $space))
+      ($hasShelter (eval (hasShelterKnownNow)))
+      ($_ (println! ("Calculating safety level. IsDay: " $isDay " HostileNearby: " $hostileNear " HasShelter: " $hasShelter)))
+
+      ($baseSafety (if $isDay 0.9 0.55))
+      ($shelterBonus (if (and $isNight $hasShelter) 0.2 0.0))
+      ($noShelterPenalty
+         (if $hasShelter
+            0.0
+            (if $isDay 0.25 0.35)))
+            
+      ($hostilePenalty
+         (if $hostileNear
+            (if $hasShelter 0.5 0.8)
+            0.0))
+
+      ($safety  (- (- (+ $baseSafety $shelterBonus) $hostilePenalty) $noShelterPenalty))
    )
-   (- (+ 0.5 $dayBonus) $hostilePenalty)))
+   (if (< $safety  0.0)
+      0.0
+      (if (> $safety  1.0) 1.0 $safety ))))
+
+(= (airMaxTicks) 300.0)
+
+(= (airUrgency $space)
+   (let $air (getAir $space)
+      (/ (- (airMaxTicks) $air) (airMaxTicks))))
+
 
 
 (= (perceptionToDemands $perceptionSpace $demandSpace)
    (let* (
-      ($hungerVal (hungerUrgency $perceptionSpace))
-      ($healthUrg (healthUrgency $perceptionSpace))
-      ($safetyLvl (safetyLevel $perceptionSpace))
-      ; ($_ (println! ("demands: " $safetyLvl $hungerVal $healthUrg)))
-      
-      ($safetyVal (- 1.0 $safetyLvl))
+      ($hungerVal (- 1 (hungerUrgency $perceptionSpace)))
+      ($healthVal (- 1 (healthUrgency $perceptionSpace)))
+      ($safetyVal (safetyLevel $perceptionSpace))
+      ($airVal (- 1 (airUrgency $perceptionSpace)))
+      ($_ (println! ("Demands: " $safetyVal $hungerVal $healthVal $airVal)))
       
       
       ((demand hunger $hMin $hMax $hOld) (getDemandByName $demandSpace hunger))
-      ($__ (updateDemandValue $demandSpace hunger $hungerVal))
+      ($_ (updateDemandValue $demandSpace hunger $hungerVal))
       
       ((demand safety $sMin $sMax $sOld) (getDemandByName $demandSpace safety))
-      ($___ (updateDemandValue $demandSpace safety $safetyVal))
+      ($_ (updateDemandValue $demandSpace safety $safetyVal))
 
       ((demand energy $eMin $eMax $eOld) (getDemandByName $demandSpace energy))
-      ($____ (updateDemandValue $demandSpace energy $healthUrg))
+      ($_ (updateDemandValue $demandSpace energy $healthVal))
+
+      ((demand breath $bMin $bMax $bOld) (getDemandByName $demandSpace breath))
+      ($_ (updateDemandValue $demandSpace breath $airVal))
+
    )
-   (Demands Updated)
+   ()
    )
 )
 
@@ -142,17 +179,19 @@
       (golden_apple True)
       (melon_slice True)
       (sweet_berries True)
-      (cookie True)
+      (glow_berries True)
       ($_ False)
    )))
 
 
 (= (hasEdibleFood $space)
-   (let $foodItems (collapse 
-      (match $space (hasItem $item $count)
+   (let* (
+      ($foodItems (collapse (match $space (hasItem $item $count)
          (if (isEdible $item) 
-            ($item $count) 
-            Empty)))
+            ($item $count)
+            (empty) ))))
+         ; ($_ (println! ("Edible food items in inventory: " $foodItems)))
+      )
       (if (== $foodItems ()) 
          False 
          True)))
@@ -163,7 +202,7 @@
       (match $space (hasItem $item $count)
          (if (isEdible $item) 
             (FoodItem $item $count) 
-            Empty))))
+            (empty)))))
 
 
 (= (isFoodAnimal $type)
@@ -177,13 +216,15 @@
    )))
 
 
-(= (hasFoodAnimalNearby $space)
-   (let $animals (collapse 
+(= (hasFoodNearby $space)
+   (let $foodEntity (collapse 
       (match $space (nearEntity $type $dist $x $y $z)
-         (if (isFoodAnimal $type)
+         ;; currently we will only look for only edible foods only
+         ;; going after food animals needs complex logic to hunt and collect, which we will implement later
+         (if (isEdible $type)
             ($type $dist)
-            Empty)))
-      (if (== $animals ())
+            (empty))))
+      (if (== $foodEntity ())
          False
          True)))
 
@@ -192,22 +233,22 @@
       (match $space (nearEntity $type $dist $x $y $z)
          (if (isFoodAnimal $type)
             ($type $dist)
-            Empty)))
+            (empty))))
 
       (if (== $animals ())
          ()
          (car-atom $animals))))
 
-(= (getNearestFoodAnimalPos $space)
-   (let $animals (collapse 
+(= (getNearestFoodPos $space)
+   (let $foodEntity (collapse 
       (match $space (nearEntity $type $dist $x $y $z)
-         (if (isFoodAnimal $type)
+         (if (isEdible $type)
             ($x $y $z $dist)
             (empty))))
-      (if (== $animals ())
+      (if (== $foodEntity ())
          ()
          (let* (
-            ($sorted (py-call (utils.sortEntities $animals)))
+            ($sorted (py-call (utils.sortEntities $foodEntity)))
             (($x $y $z $d) (car-atom $sorted))
          )
          ($x $y $z)
