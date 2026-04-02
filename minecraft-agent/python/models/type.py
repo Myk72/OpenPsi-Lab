@@ -17,6 +17,11 @@ class ActionType(Enum):
     CROUCH = auto()
     DROP = auto()
     MOVE_TO = auto()
+    BUILD_SHELTER = auto()
+    SEEK_SHELTER = auto()
+    ENTER_SHELTER = auto()
+    FIND_GROUND = auto()
+    SLEEP_AT_NIGHT = auto()
 
 
 @dataclass
@@ -33,3 +38,9 @@ class Observation:
     nearbyBlocks: List[Dict[str, Any]]
     
     lineOfSight: Optional[Dict[str, Any]] = None
+    air: Optional[float] = None
+    onGround: Optional[bool] = None
+    actionStatus: Optional[str] = None
+    lineOfSightType: Optional[str] = None
+    lineOfSightDistance: Optional[float] = None
+    lineOfSightHitType: Optional[str] = None
