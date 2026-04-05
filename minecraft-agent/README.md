@@ -51,6 +51,9 @@ Notes:
 3. Add these two files:
    - `fabric-api-[version]+1.21.jar`
    - `vereya-fabric-[version].jar`
+   
+---
+![Minecraft Image](https://i.postimg.cc/cJwxkhDy/Screenshot-2026-04-03-002018.png)
 
 ## 4. Configure IP Address
 
