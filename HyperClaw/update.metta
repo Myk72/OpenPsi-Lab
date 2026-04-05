@@ -1,5 +1,3 @@
-!(import! &self state)
-!(import! &self signals)
 
 ;; this are simple formulas just for demonstration purposes, not based on any real psychological model
 ;; state = [M_clarity, M_reliability, M_adaptivity, M_progress, C_caution, P_persistence]
@@ -87,5 +85,5 @@
 )
 
 (= (runMotivationUpdate)
-   (applySignals (allSignals))
+   (applySignals (getSignals))
 )

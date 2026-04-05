@@ -1,4 +1,3 @@
-!(import! &self types)
 
 !(bind! &motivation-space (new-space))
 !(bind! &signal-space (new-space))
@@ -75,17 +74,17 @@
    ())
 )
 
-(= (allMotives)
+(= (getMotives)
    (collapse (match &motivation-space (motive $name $value) (motive $name $value)))
 )
 
-(= (allModulators)
+(= (getModulators)
    (collapse (match &motivation-space (modulator $name $value) (modulator $name $value)))
 )
 
 (= (motivationSnapshot)
    (state
-      (allMotives)
-      (allModulators)
+      (getMotives)
+      (getModulators)
       (fetchMode))
 )
