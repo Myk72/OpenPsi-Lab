@@ -12,7 +12,8 @@
 
 (= (initMotivationState)
    (let* (
-      ($_ (clearMotivationState))
+      ($_ (collapse (clearMotivationState)))
+      ($_ (println! "Initializing Motivation State with default motives and modulators..."))
       ;; motives play the role of demand 
       ($_ (add-atom &motivation-space (motive clarity 0.40)))
       ($_ (add-atom &motivation-space (motive progress 0.55)))
