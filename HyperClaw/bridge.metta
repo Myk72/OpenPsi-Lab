@@ -1,13 +1,16 @@
 (= (stateLength $value)
-   (string_length (string-safe (repr $value)))
+   (eval (string_length (eval (string-safe (repr $value)))))
 )
 
 (= (syncSignalsFromMettaclawState)
    (let* (
-      ($_ (clearSignals))
+      ($_ (collapse (clearSignals)))
       ($msgLen (stateLength (get-state &prevmsg)))
+      ($_ (println! ("Motivation Signal Update: msgLen=" $msgLen)))
       ($resultLen (stateLength (get-state &lastresults)))
+      ($_ (println! ("Motivation Signal Update: resultLen=" $resultLen)))
       ($errorLen (stateLength (get-state &error)))
+      ($_ (println! ("Motivation Signal Update: errorLen=" $errorLen)))
       ($_ (if (> $errorLen 2)
               (progn
                  (addSignal failure 0.85)
@@ -41,18 +44,18 @@
 
 (= (baseMeTTaClawContext)
    (string-safe
-      (py-str ("PROMPT: " (getPrompt)
-               " SKILLS: " (getSkills)
+      (py-str ("PROMPT: " (eval (getPrompt))
+               " SKILLS: " (eval (getSkills))
                " OUTPUT_FORMAT: Output a ((skillName1 args1) (skillName2 args2) (skillName3 args3)) S-expression of up to 3 sexpr commands, double-check the parentheses it must me (cmd1 ... cmdn)!"
                " each arg is an explicit string hence needs quotes, and variables are forbidden!"
-               " LAST_SKILL_USE_RESULTS: " (last_chars (get-state &lastresults) (maxFeedback))
-               " HISTORY: " (getHistory)
-               " TIME: " (get_time_as_string))))
+               " LAST_SKILL_USE_RESULTS: " (eval (last_chars (get-state &lastresults) (maxFeedback)))
+               " HISTORY: " (eval (getHistory))
+               " TIME: " (eval (get_time_as_string)))))
 )
 
 ; Override MeTTaClaw context generation from the use-case layer so motivation
 (= (getContext)
-   (string-safe (py-str ((baseMeTTaClawContext) (motivationPromptBlock))))
+   (eval (string-safe (py-str ((baseMeTTaClawContext) (motivationPromptBlock)))))
 )
 
 (= (motivated-mettaclaw)
