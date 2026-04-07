@@ -32,9 +32,11 @@
    (let* (
       ($_ (syncSignalsFromMettaclawState))
       ($_ (runMotivationUpdate))
-      ($signals (string-safe (repr (getSignals))))
-      ($snapshot (string-safe (repr (motivationSnapshot))))
-      ($directive (string-safe (repr (selectDirective))))
+      ($signals (eval (string-safe (repr (getSignals)))))
+      ($snapshot (eval (string-safe (repr (motivationSnapshot)))))
+      ($directive (eval (string-safe (repr (selectDirective)))))
+
+      ($_ (println! ("Motivation Prompt Update: " $signals $snapshot $directive)))
    )
    (py-str (" MOTIVATION_SIGNALS: " $signals
             " MOTIVATION_STATE: " $snapshot
