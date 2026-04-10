@@ -1,5 +1,5 @@
 (= (stateLength $value)
-   (eval (string_length (eval (string-safe (repr $value)))))
+   (eval (string_length (eval (string-safe $value))))
 )
 
 (= (syncSignalsFromMettaclawState)
@@ -45,14 +45,14 @@
 )
 
 (= (baseMeTTaClawContext)
-   (string-safe
+   (eval (string-safe
       (py-str ("PROMPT: " (eval (getPrompt))
                " SKILLS: " (eval (getSkills))
                " OUTPUT_FORMAT: Output a ((skillName1 args1) (skillName2 args2) (skillName3 args3)) S-expression of up to 3 sexpr commands, double-check the parentheses it must me (cmd1 ... cmdn)!"
                " each arg is an explicit string hence needs quotes, and variables are forbidden!"
                " LAST_SKILL_USE_RESULTS: " (eval (last_chars (get-state &lastresults) (maxFeedback)))
                " HISTORY: " (eval (getHistory))
-               " TIME: " (eval (get_time_as_string)))))
+               " TIME: " (eval (get_time_as_string))))))
 )
 
 ; Override MeTTaClaw context generation from the use-case layer so motivation
