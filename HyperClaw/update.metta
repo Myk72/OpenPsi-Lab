@@ -6,8 +6,6 @@
 )
 
 ;; this are simple formulas just for demonstration purposes, not based on any real psychological model
-;; state = [M_clarity, M_reliability, M_adaptivity, M_progress, C_caution, P_persistence]
-;; x = clamp(state + s.W_signal)
 
 
 (= (adjustMotive $name $delta)
@@ -28,50 +26,116 @@
    (modulator $name $newValue))
 )
 
+(= (decayMotive $name)
+   (let* (
+      ($current (fetchMotiveValue $name))
+      ($baseline (baselineMotive $name))
+      ($delta (* 0.15 (- $baseline $current)))
+   )
+   (adjustMotive $name $delta))
+)
+
+(= (decayModulator $name)
+   (let* (
+      ($current (fetchModulatorValue $name))
+      ($baseline (baselineModulator $name))
+      ($delta (* 0.15 (- $baseline $current)))
+   )
+   (adjustModulator $name $delta))
+)
+
+(= (decayMotivationState)
+   (let* (
+      ($_ (decayMotive clarity))
+      ($_ (decayMotive progress))
+      ($_ (decayMotive reliability))
+      ($_ (decayMotive adaptivity))
+      ($_ (decayMotive coherence))
+      ($_ (decayMotive responsiveness))
+
+      ($_ (decayModulator urgency))
+      ($_ (decayModulator caution))
+      ($_ (decayModulator persistence))
+      ($_ (decayModulator exploration_bias))
+      ($_ (decayModulator context_depth))
+      ($_ (decayModulator human_deference))
+   )
+   ())
+)
+
 (= (applySignal $signal)
    (case $signal
       (
-         ((signal ambiguity $strength) (let* (
-            ($_ (adjustMotive clarity (* 0.40 $strength)))
-            ($_ (adjustModulator caution (* 0.15 $strength)))
-            ($_ (replaceMode orient))
-         )
-         done))
-         ((signal failure $strength) (let* (
-            ($_ (adjustMotive reliability (* 0.35 $strength)))
-            ($_ (adjustMotive adaptivity (* 0.20 $strength)))
-            ($_ (adjustModulator caution (* 0.25 $strength)))
-            ($_ (replaceMode verify))
-         )
-         done))
-         ((signal repeated-failure $strength) (let* (
-            ($_ (adjustMotive adaptivity (* 0.35 $strength)))
-            ($_ (adjustModulator persistence (* -0.25 $strength)))
-            ($_ (replaceMode recover))
-         )
-         done))
-         ((signal stalled-progress $strength) (let* (
-            ($_ (adjustMotive progress (* 0.30 $strength)))
-            ($_ (adjustMotive adaptivity (* 0.15 $strength)))
-         )
-         done))
-         ((signal verified-success $strength) (let* (
-            ($_ (adjustMotive reliability (* -0.30 $strength)))
-            ($_ (adjustMotive clarity (* -0.20 $strength)))
-            ($_ (adjustModulator caution (* -0.15 $strength)))
-            ($_ (replaceMode execute))
-         )
-         done))
-         ((signal progress-made $strength) (let* (
-            ($_ (adjustMotive progress (* -0.25 $strength)))
-            ($_ (adjustModulator persistence (* 0.10 $strength)))
-         )
-         done))
-         ((signal user-waiting $strength) (let* (
-            ($_ (adjustMotive progress (* 0.10 $strength)))
-         )
-         done))
-         ($other (empty)) ;; invalid signal
+         ((signal ambiguity $strength)
+          (let* (
+             ($_ (adjustMotive clarity (* 0.40 $strength)))
+             ($_ (adjustModulator caution (* 0.15 $strength)))
+             ($_ (adjustModulator context_depth (* 0.20 $strength)))
+             ($_ (replaceMode orient))
+          )
+          done))
+
+         ((signal failure $strength)
+          (let* (
+             ($_ (adjustMotive reliability (* 0.35 $strength)))
+             ($_ (adjustMotive adaptivity (* 0.25 $strength)))
+             ($_ (adjustModulator caution (* 0.20 $strength)))
+             ($_ (adjustModulator urgency (* 0.15 $strength)))
+             ($_ (replaceMode verify))
+          )
+          done))
+
+         ((signal repeated-failure $strength)
+          (let* (
+             ($_ (adjustMotive adaptivity (* 0.40 $strength)))
+             ($_ (adjustMotive reliability (* 0.15 $strength)))
+             ($_ (adjustModulator persistence (* -0.30 $strength)))
+             ($_ (adjustModulator exploration_bias (* 0.30 $strength)))
+             ($_ (replaceMode recover))
+          )
+          done))
+
+         ((signal stalled-progress $strength)
+          (let* (
+             ($_ (adjustMotive progress (* 0.30 $strength)))
+             ($_ (adjustMotive adaptivity (* 0.20 $strength)))
+             ($_ (adjustModulator urgency (* 0.15 $strength)))
+          )
+          done))
+
+         ((signal verified-success $strength)
+          (let* (
+             ($_ (adjustMotive reliability (* -0.30 $strength)))
+             ($_ (adjustMotive clarity (* -0.20 $strength)))
+             ($_ (adjustModulator caution (* -0.15 $strength)))
+             ($_ (replaceMode execute))
+          )
+          done))
+
+         ((signal progress-made $strength)
+          (let* (
+             ($_ (adjustMotive progress (* -0.25 $strength)))
+             ($_ (adjustModulator persistence (* 0.10 $strength)))
+          )
+          done))
+
+         ((signal task-drift $strength)
+          (let* (
+             ($_ (adjustMotive coherence (* 0.35 $strength)))
+             ($_ (adjustModulator context_depth (* 0.10 $strength)))
+             ($_ (adjustModulator human_deference (* 0.10 $strength)))
+             ($_ (replaceMode orient))
+          )
+          done))
+
+         ((signal user-waiting $strength)
+          (let* (
+             ($_ (adjustMotive responsiveness (* 0.35 $strength)))
+             ($_ (adjustModulator urgency (* 0.15 $strength)))
+             ($_ (adjustModulator human_deference (* 0.10 $strength)))
+          )
+          done))
+         ($other (empty))
       )
    ))
 
@@ -80,11 +144,16 @@
        ()
        (let* (
           (($head $tail) (decons-atom $signals))
-          ($_ (applySignal ($head)))
+          ($_ (applySignal $head))
        )
        (applySignals $tail)))
 )
 
 (= (runMotivationUpdate)
-   (applySignals (getSignals))
+   (let* (
+      ($_ (println! "Applying signal: "))
+      ($_ (decayMotivationState))
+      ($_ (applySignals (getSignals)))
+   )
+   (motivationSnapshot))
 )
